@@ -486,6 +486,15 @@
           const name = data && data.firstName ? data.firstName : 'there';
           showStatus(`Welcome back, ${name}. Redirecting you now…`, 'success');
 
+          // Store the JWT and basic user info for use on later authenticated requests.
+          if(data && data.token){
+            localStorage.setItem('authToken', data.token);
+            localStorage.setItem('userEmail', data.email || '');
+            localStorage.setItem('userRole', data.role || '');
+            localStorage.setItem('userFirstName', data.firstName || '');
+            localStorage.setItem('userId', data.id || '');
+          }
+
           // Hand off to the appropriate dashboard based on role.
           // Adjust these paths once the requestor/support-engineer views exist.
           setTimeout(() => {

@@ -20,5 +20,6 @@ public class LoginResponse {
     private String email;
     private Role role;
     private String message;
+    private String token;
 
 }
