@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface UserService {
 
-    LoginResponse login(LoginRequest loginRequest);
-
     UserDTO createUser(UserDTO userDTO);
+
+    LoginResponse login(LoginRequest loginRequest);
 
     UserDTO getUserById(Long id);
 

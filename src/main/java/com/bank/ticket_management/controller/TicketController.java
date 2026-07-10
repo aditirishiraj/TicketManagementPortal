@@ -5,7 +5,10 @@ import com.bank.ticket_management.dto.TicketHistoryDTO;
 import com.bank.ticket_management.dto.TicketRequest;
 import com.bank.ticket_management.dto.TicketResponse;
 import com.bank.ticket_management.service.TicketService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,49 +21,86 @@ public class TicketController {
     private TicketService ticketService;
 
     @PostMapping
-    public TicketResponse createTicket(@RequestBody TicketRequest request) {
-        return ticketService.createTicket(request);
+    public ResponseEntity<TicketResponse> createTicket(
+            @Valid @RequestBody TicketRequest request) {
+
+        return new ResponseEntity<>(
+                ticketService.createTicket(request),
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping
-    public List<TicketResponse> getAllTickets() {
-        return ticketService.getAllTickets();
+    public ResponseEntity<List<TicketResponse>> getAllTickets() {
+
+        return ResponseEntity.ok(
+                ticketService.getAllTickets()
+        );
     }
 
     @GetMapping("/{id}")
-    public TicketResponse getTicketById(@PathVariable Long id) {
-        return ticketService.getTicketById(id);
+    public ResponseEntity<TicketResponse> getTicketById(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                ticketService.getTicketById(id)
+        );
     }
 
     @GetMapping("/user/{userId}")
-    public List<TicketResponse> getTicketsByUser(@PathVariable Long userId) {
-        return ticketService.getTicketsByUser(userId);
+    public ResponseEntity<List<TicketResponse>> getTicketsByUser(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                ticketService.getTicketsByUser(userId)
+        );
     }
 
     @PutMapping("/{ticketId}/assign/{engineerId}")
-    public TicketResponse assignTicket(@PathVariable Long ticketId,
-                                       @PathVariable Long engineerId) {
-        return ticketService.assignTicket(ticketId, engineerId);
+    public ResponseEntity<TicketResponse> assignTicket(
+            @PathVariable Long ticketId,
+            @PathVariable Long engineerId) {
+
+        return ResponseEntity.ok(
+                ticketService.assignTicket(ticketId, engineerId)
+        );
     }
 
-    @PutMapping("/{ticketId}/status")
-    public TicketResponse updateStatus(@PathVariable Long ticketId,
-                                       @RequestParam String status) {
-        return ticketService.updateTicketStatus(ticketId, status);
+    @PutMapping("/{ticketId}/status/{status}")
+    public ResponseEntity<TicketResponse> updateTicketStatus(
+            @PathVariable Long ticketId,
+            @PathVariable String status) {
+
+        return ResponseEntity.ok(
+                ticketService.updateTicketStatus(ticketId, status)
+        );
     }
 
     @PostMapping("/comments")
-    public CommentDTO addComment(@RequestBody CommentDTO commentDTO) {
-        return ticketService.addComment(commentDTO);
+    public ResponseEntity<CommentDTO> addComment(
+            @Valid @RequestBody CommentDTO commentDTO) {
+
+        return new ResponseEntity<>(
+                ticketService.addComment(commentDTO),
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping("/{ticketId}/comments")
-    public List<CommentDTO> getComments(@PathVariable Long ticketId) {
-        return ticketService.getCommentsByTicket(ticketId);
+    public ResponseEntity<List<CommentDTO>> getComments(
+            @PathVariable Long ticketId) {
+
+        return ResponseEntity.ok(
+                ticketService.getCommentsByTicket(ticketId)
+        );
     }
 
     @GetMapping("/{ticketId}/history")
-    public List<TicketHistoryDTO> getHistory(@PathVariable Long ticketId) {
-        return ticketService.getTicketHistory(ticketId);
+    public ResponseEntity<List<TicketHistoryDTO>> getHistory(
+            @PathVariable Long ticketId) {
+
+        return ResponseEntity.ok(
+                ticketService.getTicketHistory(ticketId)
+        );
     }
 }
