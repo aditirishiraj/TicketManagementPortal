@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Management Portal — Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{
+          --navy: #0F2A4A;
+          --navy-deep: #0A1F38;
+          --paper: #FAFAF8;
+          --slate: #3C4757;
+          --slate-soft: #7C8A9A;
+          --amber: #D68A2C;
+          --amber-soft: #F0D9B3;
+          --teal: #3E7C6E;
+          --error: #B84C3E;
+          --border: #E3E1DA;
+        }
+
+        *{ box-sizing:border-box; margin:0; padding:0; }
+
+        html,body{ height:100%; }
+
+        body{
+          font-family:'Inter', sans-serif;
+          color:var(--slate);
+          background:var(--navy-deep);
+          display:flex;
+          min-height:100vh;
+          overflow-x:hidden;
+        }
+
+        /* ============ LEFT PANEL ============ */
+        .brand-panel{
+          flex:1 1 46%;
+          background:
+            radial-gradient(circle at 15% 20%, rgba(214,138,44,0.10), transparent 45%),
+            linear-gradient(160deg, var(--navy) 0%, var(--navy-deep) 100%);
+          color:#EDEFF2;
+          display:flex;
+          flex-direction:column;
+          justify-content:space-between;
+          padding:56px 56px 40px;
+          position:relative;
+          min-width:360px;
+        }
+
+        .brand-mark{
+          display:flex;
+          align-items:center;
+          gap:12px;
+        }
+
+        .brand-mark svg{ width:30px; height:30px; flex-shrink:0; }
+
+        .brand-mark span{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:12.5px;
+          letter-spacing:.14em;
+          text-transform:uppercase;
+          color:var(--amber-soft);
+        }
+
+        .brand-hero{
+          margin-top:auto;
+          margin-bottom:auto;
+          max-width:420px;
+        }
+
+        .brand-hero .eyebrow{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:12px;
+          letter-spacing:.12em;
+          text-transform:uppercase;
+          color:var(--amber);
+          margin-bottom:18px;
+          display:block;
+        }
+
+        .brand-hero h1{
+          font-family:'Fraunces', serif;
+          font-weight:500;
+          font-size:clamp(32px, 4vw, 44px);
+          line-height:1.15;
+          letter-spacing:-0.01em;
+          color:#FFFFFF;
+        }
+
+        .brand-hero p{
+          margin-top:20px;
+          font-size:15.5px;
+          line-height:1.65;
+          color:#B7C0CC;
+          max-width:360px;
+        }
+
+        /* decorative stub ticket illustration */
+        .ticket-illustration{
+          margin-top:40px;
+          border:1px solid rgba(255,255,255,0.14);
+          border-radius:10px;
+          background:rgba(255,255,255,0.03);
+          padding:18px 20px;
+          font-family:'IBM Plex Mono', monospace;
+          font-size:12px;
+          color:#9FADBD;
+          position:relative;
+          max-width:360px;
+        }
+        .ticket-illustration .row{
+          display:flex;
+          justify-content:space-between;
+          padding:5px 0;
+          border-bottom:1px dashed rgba(255,255,255,0.10);
+        }
+        .ticket-illustration .row:last-child{ border-bottom:none; }
+        .ticket-illustration .row b{ color:#E4E9EF; font-weight:500; }
+        .status-dot{
+          display:inline-block;
+          width:6px; height:6px;
+          border-radius:50%;
+          background:var(--teal);
+          margin-right:6px;
+        }
+
+        .brand-footer{
+          font-size:12.5px;
+          color:#6C7A8A;
+          font-family:'IBM Plex Mono', monospace;
+          letter-spacing:.02em;
+        }
+
+        /* ============ RIGHT PANEL ============ */
+        .form-panel{
+          flex:1 1 54%;
+          background:var(--paper);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          padding:40px 24px;
+        }
+
+        .ticket-card{
+          width:100%;
+          max-width:410px;
+          background:#FFFFFF;
+          border:1px solid var(--border);
+          border-radius:14px;
+          box-shadow: 0 24px 60px -24px rgba(15,42,74,0.28);
+          position:relative;
+          overflow:visible;
+        }
+
+        .ticket-top{
+          padding:38px 38px 28px;
+        }
+
+        .ticket-top .kicker{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11.5px;
+          letter-spacing:.1em;
+          text-transform:uppercase;
+          color:var(--amber);
+          margin-bottom:10px;
+        }
+
+        .ticket-top h2{
+          font-family:'Fraunces', serif;
+          font-weight:500;
+          font-size:26px;
+          color:var(--navy-deep);
+          margin-bottom:6px;
+        }
+
+        .ticket-top .sub{
+          font-size:13.5px;
+          color:var(--slate-soft);
+        }
+
+        form{ padding:0 38px; }
+
+        .field{
+          margin-bottom:18px;
+        }
+
+        .field label{
+          display:block;
+          font-size:12.5px;
+          font-weight:600;
+          color:var(--slate);
+          margin-bottom:7px;
+          letter-spacing:.01em;
+        }
+
+        .field input{
+          width:100%;
+          padding:12px 14px;
+          font-family:'Inter', sans-serif;
+          font-size:14.5px;
+          color:var(--navy-deep);
+          background:#FCFCFB;
+          border:1.5px solid var(--border);
+          border-radius:8px;
+          outline:none;
+          transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+        }
+
+        .field input::placeholder{ color:#B7BCC4; }
+
+        .field input:focus{
+          border-color:var(--amber);
+          background:#FFFFFF;
+          box-shadow:0 0 0 3px rgba(214,138,44,0.14);
+        }
+
+        .field input:focus-visible{
+          outline:2px solid var(--amber);
+          outline-offset:1px;
+        }
+
+        .row-inline{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          margin:2px 0 22px;
+        }
+
+        .remember{
+          display:flex;
+          align-items:center;
+          gap:8px;
+          font-size:13px;
+          color:var(--slate-soft);
+        }
+
+        .remember input{ accent-color:var(--amber); width:15px; height:15px; }
+
+        .submit-btn{
+          width:100%;
+          padding:13px 16px;
+          background:var(--navy);
+          color:#FFFFFF;
+          border:none;
+          border-radius:8px;
+          font-family:'Inter', sans-serif;
+          font-size:14.5px;
+          font-weight:600;
+          letter-spacing:.01em;
+          cursor:pointer;
+          transition:background .15s ease, transform .1s ease;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:8px;
+        }
+
+        .submit-btn:hover{ background:#173763; }
+        .submit-btn:active{ transform:translateY(1px); }
+        .submit-btn:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+        .submit-btn:disabled{ opacity:.65; cursor:not-allowed; }
+
+        .submit-btn .spinner{
+          width:15px; height:15px;
+          border-radius:50%;
+          border:2px solid rgba(255,255,255,0.35);
+          border-top-color:#fff;
+          animation:spin .7s linear infinite;
+          display:none;
+        }
+        .submit-btn.loading .spinner{ display:inline-block; }
+        .submit-btn.loading .btn-text{ display:none; }
+
+        @keyframes spin{ to{ transform:rotate(360deg); } }
+
+        /* perforation divider */
+        .perforation{
+          position:relative;
+          height:0;
+          margin:30px 0 0;
+        }
+        .perforation::before{
+          content:"";
+          position:absolute;
+          left:-1px; right:-1px; top:0;
+          border-top:1.5px dashed var(--border);
+        }
+        .perf-hole{
+          position:absolute;
+          top:-9px;
+          width:18px; height:18px;
+          border-radius:50%;
+          background:var(--paper);
+        }
+        .perf-hole.left{ left:-9px; }
+        .perf-hole.right{ right:-9px; }
+
+        .ticket-stub{
+          padding:22px 38px 30px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+        }
+
+        .stub-note{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11.5px;
+          color:var(--slate-soft);
+          line-height:1.5;
+        }
+
+        .stub-note a{
+          color:var(--navy);
+          text-decoration:none;
+          border-bottom:1px solid var(--amber);
+          font-weight:500;
+        }
+        .stub-note a:hover{ color:var(--amber); }
+
+        /* status message */
+        .status-msg{
+          margin:0 38px 18px;
+          padding:11px 14px;
+          border-radius:7px;
+          font-size:13px;
+          line-height:1.5;
+          display:none;
+        }
+        .status-msg.show{ display:block; }
+        .status-msg.error{
+          background:#FBEBE8;
+          border:1px solid #EFC9C2;
+          color:var(--error);
+        }
+        .status-msg.success{
+          background:#E9F3F0;
+          border:1px solid #BFDBD3;
+          color:var(--teal);
+        }
+
+        @media (max-width: 860px){
+          body{ flex-direction:column; }
+          .brand-panel{ min-width:0; padding:36px 28px; }
+          .brand-hero{ margin:24px 0; }
+          .ticket-illustration{ max-width:none; }
+          .form-panel{ padding:32px 20px 48px; }
+        }
+
+        @media (prefers-reduced-motion: reduce){
+          .submit-btn, .field input{ transition:none; }
+          .spinner{ animation:none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LEFT: brand / identity panel -->
+<div class="brand-panel">
+    <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="5" width="20" height="14" rx="2" stroke="#D68A2C" stroke-width="1.6"/>
+            <path d="M2 10H22" stroke="#D68A2C" stroke-width="1.6"/>
+            <circle cx="17" cy="14.5" r="1.4" fill="#D68A2C"/>
+        </svg>
+        <span>Ticket Management Portal</span>
+    </div>
+
+    <div class="brand-hero">
+        <span class="eyebrow">Internal Banking Support</span>
+        <h1>Every issue,<br>tracked to resolution.</h1>
+        <p>Sign in to raise a new issue as a requestor, or to review and resolve open tickets as a support engineer.</p>
+
+        <div class="ticket-illustration">
+            <div class="row"><span>Ticket</span><b>#TMP-1042</b></div>
+            <div class="row"><span>Client</span><b>HDFC Bank</b></div>
+            <div class="row"><span>Category</span><b>Payment</b></div>
+            <div class="row"><span>Status</span><b><span class="status-dot"></span>In Progress</b></div>
+        </div>
+    </div>
+
+    <div class="brand-footer">Bank Internal Systems · Access restricted to authorised staff</div>
+</div>
+
+<!-- RIGHT: login form, styled as the ticket itself -->
+<div class="form-panel">
+    <div class="ticket-card">
+
+        <div class="ticket-top">
+            <div class="kicker">Boarding Pass · Staff Access</div>
+            <h2>Sign in to your account</h2>
+            <p class="sub">Use the email and password issued to you.</p>
+        </div>
+
+        <div id="statusMsg" class="status-msg" role="alert"></div>
+
+        <form id="loginForm" novalidate>
+            <div class="field">
+                <label for="email">Email address</label>
+                <input type="email" id="email" name="email" placeholder="you@bank.com" autocomplete="username" required>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+            </div>
+
+            <div class="row-inline">
+                <label class="remember">
+                    <input type="checkbox" id="remember">
+                    Keep me signed in
+                </label>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span class="btn-text">Sign in</span>
+                <span class="spinner"></span>
+            </button>
+        </form>
+
+        <div class="perforation">
+            <div class="perf-hole left"></div>
+            <div class="perf-hole right"></div>
+        </div>
+
+        <div class="ticket-stub">
+            <div class="stub-note">
+                Locked out or new to the portal?<br>
+                <a href="#" id="contactAdmin">Contact your system administrator</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:8080/api/auth/login';
+
+    const form = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    function showStatus(message, type){
+      statusMsg.textContent = message;
+      statusMsg.className = 'status-msg show ' + type;
+    }
+
+    function clearStatus(){
+      statusMsg.className = 'status-msg';
+      statusMsg.textContent = '';
+    }
+
+    function setLoading(isLoading){
+      submitBtn.disabled = isLoading;
+      submitBtn.classList.toggle('loading', isLoading);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearStatus();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if(!email || !password){
+        showStatus('Enter both your email and password to continue.', 'error');
+        return;
+      }
+
+      setLoading(true);
+
+      try{
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        let data = null;
+        try{ data = await response.json(); } catch(_){ /* non-JSON body */ }
+
+        if(response.ok){
+          const name = data && data.firstName ? data.firstName : 'there';
+          showStatus(`Welcome back, ${name}. Redirecting you now…`, 'success');
+
+          // Store the JWT and basic user info for use on later authenticated requests.
+          if(data && data.token){
+            localStorage.setItem('authToken', data.token);
+            localStorage.setItem('userEmail', data.email || '');
+            localStorage.setItem('userRole', data.role || '');
+            localStorage.setItem('userFirstName', data.firstName || '');
+            localStorage.setItem('userId', data.id || '');
+          }
+
+          // Hand off to the appropriate dashboard based on role.
+          // Adjust these paths once the requestor/support-engineer views exist.
+          setTimeout(() => {
+            if(data && data.role === 'SUPPORT_ENGINEER'){
+              window.location.href = '/support-dashboard.html';
+            } else {
+              window.location.href = '/requestor-dashboard.html';
+            }
+          }, 700);
+
+        } else if(response.status === 401){
+          showStatus(data && data.message ? data.message : 'Incorrect email or password. Please try again.', 'error');
+        } else if(response.status === 404){
+          showStatus(data && data.message ? data.message : 'No account found with that email.', 'error');
+        } else {
+          showStatus('Something went wrong while signing in. Please try again shortly.', 'error');
+        }
+
+      } catch(err){
+        showStatus('Could not reach the server. Check that the backend is running on port 8080.', 'error');
+      } finally{
+        setLoading(false);
+      }
+    });
+
+    document.getElementById('contactAdmin').addEventListener('click', (e) => {
+      e.preventDefault();
+      showStatus('Please reach out to your bank\'s IT support desk to reset access.', 'success');
+    });
+</script>
+
+</body>
+</html>

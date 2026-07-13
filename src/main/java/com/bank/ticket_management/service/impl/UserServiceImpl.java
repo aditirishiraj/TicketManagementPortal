@@ -9,6 +9,7 @@ import com.bank.ticket_management.exception.InvalidCredentialsException;
 import com.bank.ticket_management.exception.UserNotFoundException;
 import com.bank.ticket_management.repository.UserRepository;
 import com.bank.ticket_management.service.UserService;
+import com.bank.ticket_management.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public UserDTO createUser(UserDTO userDTO) {
@@ -63,6 +67,8 @@ public class UserServiceImpl implements UserService {
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
+        String token = jwtUtil.generateToken(user);
+
         return LoginResponse.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
@@ -70,6 +76,7 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .message("Login Successful")
+                .token(token)
                 .build();
     }
 
