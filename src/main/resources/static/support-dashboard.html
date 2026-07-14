@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Management Portal — Support Queue</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{
+          --navy: #0F2A4A;
+          --navy-deep: #0A1F38;
+          --paper: #FAFAF8;
+          --slate: #3C4757;
+          --slate-soft: #7C8A9A;
+          --amber: #D68A2C;
+          --amber-soft: #F0D9B3;
+          --teal: #3E7C6E;
+          --error: #B84C3E;
+          --border: #E3E1DA;
+        }
+
+        *{ box-sizing:border-box; margin:0; padding:0; }
+        html,body{ min-height:100%; }
+        body{
+          font-family:'Inter', sans-serif;
+          color:var(--slate);
+          background:var(--paper);
+        }
+
+        header{
+          background:linear-gradient(160deg, var(--navy) 0%, var(--navy-deep) 100%);
+          color:#EDEFF2;
+          padding:22px 40px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          flex-wrap:wrap;
+          gap:14px;
+        }
+
+        .brand-mark{ display:flex; align-items:center; gap:12px; }
+        .brand-mark svg{ width:26px; height:26px; flex-shrink:0; }
+        .brand-mark span{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:12px;
+          letter-spacing:.14em;
+          text-transform:uppercase;
+          color:var(--amber-soft);
+        }
+
+        .header-right{ display:flex; align-items:center; gap:18px; }
+        .user-chip{ font-size:13.5px; color:#C9D2DC; }
+        .user-chip b{ color:#FFFFFF; font-weight:600; }
+
+        .logout-btn{
+          font-family:'Inter', sans-serif;
+          font-size:13px;
+          font-weight:600;
+          color:var(--navy-deep);
+          background:var(--amber-soft);
+          border:none;
+          padding:9px 16px;
+          border-radius:7px;
+          cursor:pointer;
+          transition:background .15s ease;
+        }
+        .logout-btn:hover{ background:#fff; }
+
+        main{
+          max-width:1180px;
+          margin:0 auto;
+          padding:44px 32px 80px;
+        }
+
+        .page-heading{ margin-bottom:8px; }
+        .page-heading .kicker{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11.5px;
+          letter-spacing:.1em;
+          text-transform:uppercase;
+          color:var(--amber);
+          margin-bottom:8px;
+          display:block;
+        }
+        .page-heading h1{
+          font-family:'Fraunces', serif;
+          font-weight:500;
+          font-size:clamp(26px, 3vw, 34px);
+          color:var(--navy-deep);
+        }
+
+        /* ---------- filter bar ---------- */
+        .filter-bar{
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin:28px 0 22px;
+          flex-wrap:wrap;
+        }
+
+        .filter-chip{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:12px;
+          letter-spacing:.02em;
+          padding:8px 14px;
+          border-radius:20px;
+          border:1.5px solid var(--border);
+          background:#FFFFFF;
+          color:var(--slate-soft);
+          cursor:pointer;
+          transition:all .15s ease;
+        }
+        .filter-chip:hover{ border-color:var(--amber); color:var(--navy-deep); }
+        .filter-chip.active{
+          background:var(--navy);
+          border-color:var(--navy);
+          color:#FFFFFF;
+        }
+
+        .count-summary{
+          margin-left:auto;
+          font-family:'IBM Plex Mono', monospace;
+          font-size:12.5px;
+          color:var(--slate-soft);
+        }
+
+        /* ---------- ticket cards ---------- */
+        .ticket-list{ display:flex; flex-direction:column; gap:14px; }
+
+        .ticket-card{
+          background:#FFFFFF;
+          border:1px solid var(--border);
+          border-left:4px solid var(--slate-soft);
+          border-radius:10px;
+          overflow:hidden;
+        }
+        .ticket-card.priority-HIGH{ border-left-color:var(--error); }
+        .ticket-card.priority-MEDIUM{ border-left-color:var(--amber); }
+        .ticket-card.priority-LOW{ border-left-color:var(--teal); }
+
+        .ticket-summary{
+          padding:18px 20px;
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:20px;
+          flex-wrap:wrap;
+          cursor:pointer;
+        }
+
+        .ticket-main{ flex:1; min-width:260px; }
+
+        .ticket-top-row{
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin-bottom:6px;
+          flex-wrap:wrap;
+        }
+
+        .ticket-id{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--slate-soft); }
+
+        .badge{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:10.5px;
+          letter-spacing:.04em;
+          text-transform:uppercase;
+          padding:3px 9px;
+          border-radius:20px;
+          font-weight:500;
+        }
+        .badge.status-OPEN{ background:#FBEBE8; color:var(--error); }
+        .badge.status-IN_PROGRESS{ background:#F0D9B3; color:#8A5A16; }
+        .badge.status-RESOLVED{ background:#E9F3F0; color:var(--teal); }
+        .badge.status-CLOSED{ background:#EDEDEA; color:var(--slate-soft); }
+
+        .ticket-title{ font-size:15.5px; font-weight:600; color:var(--navy-deep); margin-bottom:4px; }
+        .ticket-desc{ font-size:13.5px; color:var(--slate-soft); line-height:1.5; max-width:640px; }
+
+        .ticket-meta{
+          display:flex;
+          flex-direction:column;
+          align-items:flex-end;
+          gap:6px;
+          font-size:12px;
+          color:var(--slate-soft);
+          font-family:'IBM Plex Mono', monospace;
+          white-space:nowrap;
+          text-align:right;
+        }
+        .ticket-meta .assigned{ color:var(--navy-deep); font-weight:500; }
+
+        .expand-icon{
+          width:18px; height:18px;
+          color:var(--slate-soft);
+          transition:transform .2s ease;
+          flex-shrink:0;
+          margin-top:2px;
+        }
+        .ticket-card.open .expand-icon{ transform:rotate(180deg); }
+
+        /* ---------- expanded detail panel ---------- */
+        .ticket-detail{
+          max-height:0;
+          overflow:hidden;
+          transition:max-height .25s ease;
+          border-top:1px solid var(--border);
+        }
+        .ticket-card.open .ticket-detail{ max-height:1400px; }
+
+        .detail-inner{ padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+        .detail-section h4{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11px;
+          letter-spacing:.08em;
+          text-transform:uppercase;
+          color:var(--slate-soft);
+          margin-bottom:10px;
+        }
+
+        .control-row{ display:flex; gap:10px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
+
+        .control-row select,
+        .control-row input,
+        .control-row textarea{
+          font-family:'Inter', sans-serif;
+          font-size:13.5px;
+          color:var(--navy-deep);
+          background:#FCFCFB;
+          border:1.5px solid var(--border);
+          border-radius:7px;
+          padding:9px 11px;
+          outline:none;
+        }
+        .control-row select:focus,
+        .control-row input:focus,
+        .control-row textarea:focus{
+          border-color:var(--amber);
+          background:#FFFFFF;
+        }
+
+        .small-btn{
+          font-family:'Inter', sans-serif;
+          font-size:13px;
+          font-weight:600;
+          color:#FFFFFF;
+          background:var(--navy);
+          border:none;
+          padding:9px 14px;
+          border-radius:7px;
+          cursor:pointer;
+          transition:background .15s ease;
+        }
+        .small-btn:hover{ background:#173763; }
+        .small-btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+        .inline-status{
+          font-size:12.5px;
+          font-weight:500;
+        }
+        .inline-status.error{ color:var(--error); }
+        .inline-status.success{ color:var(--teal); }
+
+        .comment-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:12px; max-height:220px; overflow-y:auto; }
+        .comment-item{
+          background:var(--paper);
+          border:1px solid var(--border);
+          border-radius:8px;
+          padding:10px 12px;
+          font-size:13px;
+        }
+        .comment-item .comment-meta{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:10.5px;
+          color:var(--slate-soft);
+          margin-bottom:4px;
+        }
+
+        .add-comment-row{ display:flex; gap:8px; }
+        .add-comment-row textarea{ flex:1; min-height:44px; resize:vertical; }
+
+        .history-list{ display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; }
+        .history-item{
+          font-size:12.5px;
+          color:var(--slate);
+          padding:8px 0;
+          border-bottom:1px dashed var(--border);
+        }
+        .history-item:last-child{ border-bottom:none; }
+        .history-item .history-time{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11px;
+          color:var(--slate-soft);
+          display:block;
+          margin-top:2px;
+        }
+
+        .muted-note{ font-size:12.5px; color:var(--slate-soft); }
+
+        .empty-state{
+          text-align:center;
+          padding:56px 20px;
+          border:1.5px dashed var(--border);
+          border-radius:12px;
+          color:var(--slate-soft);
+        }
+        .empty-state .big{
+          font-family:'Fraunces', serif;
+          font-size:19px;
+          color:var(--navy-deep);
+          margin-bottom:6px;
+        }
+
+        .loading-state{ text-align:center; padding:40px 20px; color:var(--slate-soft); font-size:13.5px; }
+
+        @media (max-width: 760px){
+          .detail-inner{ grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="5" width="20" height="14" rx="2" stroke="#D68A2C" stroke-width="1.6"/>
+            <path d="M2 10H22" stroke="#D68A2C" stroke-width="1.6"/>
+            <circle cx="17" cy="14.5" r="1.4" fill="#D68A2C"/>
+        </svg>
+        <span>Ticket Management Portal</span>
+    </div>
+    <div class="header-right">
+        <span class="user-chip">Signed in as <b id="userNameLabel">—</b></span>
+        <button class="logout-btn" id="logoutBtn">Sign out</button>
+    </div>
+</header>
+
+<main>
+    <div class="page-heading">
+        <span class="kicker">Support Engineer View</span>
+        <h1>Ticket queue</h1>
+    </div>
+
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-chip active" data-filter="ALL">All</button>
+        <button class="filter-chip" data-filter="OPEN">Open</button>
+        <button class="filter-chip" data-filter="IN_PROGRESS">In progress</button>
+        <button class="filter-chip" data-filter="RESOLVED">Resolved</button>
+        <button class="filter-chip" data-filter="CLOSED">Closed</button>
+        <span class="count-summary" id="countSummary"></span>
+    </div>
+
+    <div id="ticketListContainer">
+        <div class="loading-state">Loading tickets…</div>
+    </div>
+</main>
+
+<script>
+    const API_BASE = 'http://localhost:8080/api';
+
+    const token = localStorage.getItem('authToken');
+    const userFirstName = localStorage.getItem('userFirstName');
+
+    if(!token){
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('userNameLabel').textContent = userFirstName || 'there';
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userFirstName');
+      localStorage.removeItem('userId');
+      window.location.href = '/login.html';
+    });
+
+    function authHeaders(extra){
+      return Object.assign({ 'Authorization': `Bearer ${token}` }, extra || {});
+    }
+
+    function escapeHtml(str){
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+
+    function formatDateTime(iso){
+      if(!iso) return '';
+      const d = new Date(iso);
+      if(isNaN(d.getTime())) return '';
+      return d.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+
+    const STATUS_OPTIONS = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+
+    let allTickets = [];
+    let engineers = [];
+    let userNameById = {};
+    let currentFilter = 'ALL';
+
+    const listContainer = document.getElementById('ticketListContainer');
+    const countSummary = document.getElementById('countSummary');
+
+    // ---------- Fetch users: engineers for the assign dropdown, and a name lookup for comments ----------
+    async function loadEngineers(){
+      try{
+        const response = await fetch(`${API_BASE}/users`, { headers: authHeaders() });
+        if(!response.ok) return;
+        const users = await response.json();
+        engineers = users.filter(u => u.role === 'SUPPORT_ENGINEER');
+        userNameById = {};
+        users.forEach(u => {
+          userNameById[u.id] = `${u.firstName} ${u.lastName}`;
+        });
+      } catch(err){
+        engineers = [];
+        userNameById = {};
+      }
+    }
+
+    // ---------- Fetch all tickets ----------
+    async function loadTickets(){
+      listContainer.innerHTML = '<div class="loading-state">Loading tickets…</div>';
+      try{
+        const response = await fetch(`${API_BASE}/tickets`, { headers: authHeaders() });
+
+        if(response.status === 401 || response.status === 403){
+          localStorage.removeItem('authToken');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        if(!response.ok){
+          listContainer.innerHTML = `<div class="empty-state"><div class="big">Couldn't load tickets</div><div>Please refresh the page to try again.</div></div>`;
+          return;
+        }
+
+        allTickets = await response.json();
+        renderTickets();
+
+      } catch(err){
+        listContainer.innerHTML = `<div class="empty-state"><div class="big">Couldn't reach the server</div><div>Check that the backend is running on port 8080.</div></div>`;
+      }
+    }
+
+    function renderTickets(){
+      const filtered = currentFilter === 'ALL'
+        ? allTickets
+        : allTickets.filter(t => t.status === currentFilter);
+
+      countSummary.textContent = `${filtered.length} of ${allTickets.length} tickets`;
+
+      if(filtered.length === 0){
+        listContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="big">No tickets here</div>
+            <div>Nothing matches this filter right now.</div>
+          </div>`;
+        return;
+      }
+
+      const sorted = [...filtered].sort((a, b) => {
+        const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return db - da;
+      });
+
+      listContainer.innerHTML = `<div class="ticket-list">${
+        sorted.map(t => ticketCardHtml(t)).join('')
+      }</div>`;
+
+      // Wire up summary row click-to-expand
+      listContainer.querySelectorAll('.ticket-summary').forEach(el => {
+        el.addEventListener('click', () => {
+          const card = el.closest('.ticket-card');
+          const id = card.dataset.id;
+          const wasOpen = card.classList.contains('open');
+          card.classList.toggle('open');
+          if(!wasOpen){
+            loadComments(id);
+            loadHistory(id);
+          }
+        });
+      });
+
+      // Wire up assign buttons
+      listContainer.querySelectorAll('.assign-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleAssign(btn.dataset.id);
+        });
+      });
+
+      // Wire up status update buttons
+      listContainer.querySelectorAll('.status-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleStatusUpdate(btn.dataset.id);
+        });
+      });
+
+      // Wire up comment submit buttons
+      listContainer.querySelectorAll('.comment-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleAddComment(btn.dataset.id);
+        });
+      });
+
+      // Prevent clicks inside the detail panel from collapsing the card
+      listContainer.querySelectorAll('.ticket-detail').forEach(el => {
+        el.addEventListener('click', (e) => e.stopPropagation());
+      });
+    }
+
+    function ticketCardHtml(t){
+      const engineerOptions = engineers.map(e =>
+        `<option value="${e.id}">${escapeHtml(e.firstName)} ${escapeHtml(e.lastName)}</option>`
+      ).join('');
+
+      const statusOptions = STATUS_OPTIONS.map(s =>
+        `<option value="${s}" ${s === t.status ? 'selected' : ''}>${s.replace('_',' ')}</option>`
+      ).join('');
+
+      return `
+        <div class="ticket-card priority-${escapeHtml(t.priority || '')}" data-id="${t.id}">
+          <div class="ticket-summary">
+            <div class="ticket-main">
+              <div class="ticket-top-row">
+                <span class="ticket-id">#TMP-${escapeHtml(t.id)}</span>
+                <span class="badge status-${escapeHtml(t.status || 'OPEN')}">${escapeHtml((t.status || 'OPEN').replace('_',' '))}</span>
+              </div>
+              <div class="ticket-title">${escapeHtml(t.title)}</div>
+              <div class="ticket-desc">${escapeHtml(t.description)}</div>
+            </div>
+            <div class="ticket-meta">
+              <span>${escapeHtml(t.clientName || '—')}</span>
+              <span>${escapeHtml(t.category || '')} · ${escapeHtml(t.priority || '')}</span>
+              <span>Raised by ${escapeHtml(t.createdBy || 'Unknown')}</span>
+              <span class="assigned">${t.assignedTo ? 'Assigned: ' + escapeHtml(t.assignedTo) : 'Unassigned'}</span>
+              <span>${formatDateTime(t.createdAt)}</span>
+            </div>
+            <svg class="expand-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <div class="ticket-detail">
+            <div class="detail-inner">
+
+              <div class="detail-section">
+                <h4>Actions</h4>
+
+                <div class="control-row">
+                  <select class="assign-select" data-id="${t.id}">
+                    <option value="">Assign to engineer…</option>
+                    ${engineerOptions}
+                  </select>
+                  <button class="small-btn assign-btn" data-id="${t.id}">Assign</button>
+                </div>
+
+                <div class="control-row">
+                  <select class="status-select" data-id="${t.id}">
+                    ${statusOptions}
+                  </select>
+                  <button class="small-btn status-btn" data-id="${t.id}">Update status</button>
+                </div>
+
+                <div class="inline-status" id="actionStatus-${t.id}"></div>
+
+                <h4 style="margin-top:20px;">History</h4>
+                <div class="history-list" id="historyList-${t.id}">
+                  <div class="muted-note">Loading history…</div>
+                </div>
+              </div>
+
+              <div class="detail-section">
+                <h4>Comments</h4>
+                <div class="comment-list" id="commentList-${t.id}">
+                  <div class="muted-note">Loading comments…</div>
+                </div>
+                <div class="add-comment-row">
+                  <textarea class="comment-input" data-id="${t.id}" placeholder="Add an internal comment…"></textarea>
+                  <button class="small-btn comment-btn" data-id="${t.id}">Post</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function loadComments(ticketId){
+      const container = document.getElementById(`commentList-${ticketId}`);
+      try{
+        const response = await fetch(`${API_BASE}/tickets/${ticketId}/comments`, { headers: authHeaders() });
+        if(!response.ok){
+          container.innerHTML = `<div class="muted-note">Couldn't load comments.</div>`;
+          return;
+        }
+        const comments = await response.json();
+        if(!comments || comments.length === 0){
+          container.innerHTML = `<div class="muted-note">No comments yet.</div>`;
+          return;
+        }
+        container.innerHTML = comments.map(c => `
+          <div class="comment-item">
+            <div class="comment-meta">${escapeHtml(userNameById[c.userId] || `User #${c.userId}`)} · ${formatDateTime(c.commentedAt)}</div>
+            <div>${escapeHtml(c.message || '')}</div>
+          </div>
+        `).join('');
+      } catch(err){
+        container.innerHTML = `<div class="muted-note">Couldn't reach the server.</div>`;
+      }
+    }
+
+    async function loadHistory(ticketId){
+      const container = document.getElementById(`historyList-${ticketId}`);
+      try{
+        const response = await fetch(`${API_BASE}/tickets/${ticketId}/history`, { headers: authHeaders() });
+        if(!response.ok){
+          container.innerHTML = `<div class="muted-note">Couldn't load history.</div>`;
+          return;
+        }
+        const history = await response.json();
+        if(!history || history.length === 0){
+          container.innerHTML = `<div class="muted-note">No history yet.</div>`;
+          return;
+        }
+        container.innerHTML = history.map(h => `
+          <div class="history-item">
+            ${escapeHtml(h.oldStatus || '—')} → ${escapeHtml(h.newStatus || '—')} by ${escapeHtml(h.updatedBy || 'Unknown')}
+            <span class="history-time">${formatDateTime(h.updatedAt)}</span>
+          </div>
+        `).join('');
+      } catch(err){
+        container.innerHTML = `<div class="muted-note">Couldn't reach the server.</div>`;
+      }
+    }
+
+    async function handleAssign(ticketId){
+      const select = listContainer.querySelector(`.assign-select[data-id="${ticketId}"]`);
+      const statusEl = document.getElementById(`actionStatus-${ticketId}`);
+      const engineerId = select.value;
+
+      if(!engineerId){
+        statusEl.textContent = 'Choose an engineer first.';
+        statusEl.className = 'inline-status error';
+        return;
+      }
+
+      statusEl.textContent = 'Assigning…';
+      statusEl.className = 'inline-status';
+
+      try{
+        const response = await fetch(`${API_BASE}/tickets/${ticketId}/assign/${engineerId}`, {
+          method: 'PUT',
+          headers: authHeaders()
+        });
+
+        if(!response.ok){
+          statusEl.textContent = 'Could not assign this ticket.';
+          statusEl.className = 'inline-status error';
+          return;
+        }
+
+        statusEl.textContent = 'Assigned successfully.';
+        statusEl.className = 'inline-status success';
+        await loadTickets();
+
+      } catch(err){
+        statusEl.textContent = 'Could not reach the server.';
+        statusEl.className = 'inline-status error';
+      }
+    }
+
+    async function handleStatusUpdate(ticketId){
+      const select = listContainer.querySelector(`.status-select[data-id="${ticketId}"]`);
+      const statusEl = document.getElementById(`actionStatus-${ticketId}`);
+      const newStatus = select.value;
+
+      statusEl.textContent = 'Updating…';
+      statusEl.className = 'inline-status';
+
+      try{
+        const response = await fetch(`${API_BASE}/tickets/${ticketId}/status/${newStatus}`, {
+          method: 'PUT',
+          headers: authHeaders()
+        });
+
+        if(!response.ok){
+          statusEl.textContent = 'Could not update status.';
+          statusEl.className = 'inline-status error';
+          return;
+        }
+
+        statusEl.textContent = 'Status updated.';
+        statusEl.className = 'inline-status success';
+        await loadTickets();
+
+      } catch(err){
+        statusEl.textContent = 'Could not reach the server.';
+        statusEl.className = 'inline-status error';
+      }
+    }
+
+    async function handleAddComment(ticketId){
+      const textarea = listContainer.querySelector(`.comment-input[data-id="${ticketId}"]`);
+      const text = textarea.value.trim();
+      if(!text) return;
+
+      const userId = localStorage.getItem('userId');
+
+      try{
+        const response = await fetch(`${API_BASE}/tickets/comments`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            ticketId: parseInt(ticketId, 10),
+            userId: parseInt(userId, 10),
+            message: text
+          })
+        });
+
+        if(!response.ok) return;
+
+        textarea.value = '';
+        await loadComments(ticketId);
+
+      } catch(err){
+        // Silently ignore — comment box stays filled so the user can retry.
+      }
+    }
+
+    // ---------- Filter bar ----------
+    document.getElementById('filterBar').addEventListener('click', (e) => {
+      const chip = e.target.closest('.filter-chip');
+      if(!chip) return;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentFilter = chip.dataset.filter;
+      renderTickets();
+    });
+
+    // ---------- Init ----------
+    (async function init(){
+      await loadEngineers();
+      await loadTickets();
+    })();
+</script>
+
+</body>
+</html>

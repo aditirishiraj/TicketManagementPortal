@@ -259,11 +259,7 @@
           border-left:4px solid var(--slate-soft);
           border-radius:10px;
           padding:18px 20px;
-          display:flex;
-          align-items:flex-start;
-          justify-content:space-between;
           gap:20px;
-          flex-wrap:wrap;
         }
 
         .ticket-card.priority-HIGH{ border-left-color:var(--error); }
@@ -352,6 +348,68 @@
           .field.span-2{ grid-column: span 1; }
           .form-actions{ grid-column: span 1; flex-direction:column-reverse; align-items:stretch; gap:10px; }
         }
+
+        /* ============ EXPANDABLE TICKET DETAIL ============ */
+        .ticket-card{ cursor:pointer; display:flex; flex-direction:column; align-items:stretch; }
+        .ticket-card-top{
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:20px;
+          flex-wrap:wrap;
+        }
+        .ticket-detail{
+          max-height:0;
+          overflow:hidden;
+          transition:max-height .25s ease;
+        }
+        .ticket-card.expanded .ticket-detail{ max-height:600px; margin-top:18px; }
+        .ticket-detail-inner{
+          border-top:1px solid var(--border);
+          padding-top:16px;
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:24px;
+        }
+        .detail-col h4{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11px;
+          letter-spacing:.08em;
+          text-transform:uppercase;
+          color:var(--slate-soft);
+          margin-bottom:10px;
+        }
+        .comment-item{
+          background:#FCFCFB;
+          border:1px solid var(--border);
+          border-radius:8px;
+          padding:10px 12px;
+          margin-bottom:8px;
+          font-size:13px;
+        }
+        .comment-item .comment-meta{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11px;
+          color:var(--slate-soft);
+          margin-bottom:4px;
+        }
+        .history-item{
+          font-size:13px;
+          padding:8px 0;
+          border-bottom:1px solid var(--border);
+        }
+        .history-item:last-child{ border-bottom:none; }
+        .history-item .history-meta{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11px;
+          color:var(--slate-soft);
+          margin-top:2px;
+        }
+        .detail-empty{ font-size:13px; color:var(--slate-soft); }
+        .detail-loading{ font-size:13px; color:var(--slate-soft); }
+        @media (max-width: 640px){
+          .ticket-detail-inner{ grid-template-columns:1fr; }
+        }
     </style>
 </head>
 <body>
@@ -402,7 +460,7 @@
                         <option value="LOGIN">Login</option>
                         <option value="PAYMENT">Payment</option>
                         <option value="ACCOUNT">Account</option>
-                        <option value="CARD">Card</option>
+                        <option value="TRANSFER">Transfer</option>
                         <option value="OTHER">Other</option>
                     </select>
                 </div>
@@ -413,6 +471,7 @@
                         <option value="LOW">Low</option>
                         <option value="MEDIUM" selected>Medium</option>
                         <option value="HIGH">High</option>
+                        <option value="CRITICAL">Critical</option>
                     </select>
                 </div>
 
@@ -515,22 +574,102 @@
 
       listContainer.innerHTML = `<div class="ticket-list">${
         sorted.map(t => `
-          <div class="ticket-card priority-${escapeHtml(t.priority || '')}">
-            <div class="ticket-main">
-              <div class="ticket-top-row">
-                <span class="ticket-id">#TMP-${escapeHtml(t.id)}</span>
-                <span class="badge status-${escapeHtml(t.status || 'OPEN')}">${escapeHtml((t.status || 'OPEN').replace('_',' '))}</span>
+          <div class="ticket-card priority-${escapeHtml(t.priority || '')}" data-ticket-id="${escapeHtml(t.id)}">
+            <div class="ticket-card-top">
+              <div class="ticket-main">
+                <div class="ticket-top-row">
+                  <span class="ticket-id">#TMP-${escapeHtml(t.id)}</span>
+                  <span class="badge status-${escapeHtml(t.status || 'OPEN')}">${escapeHtml((t.status || 'OPEN').replace('_',' '))}</span>
+                </div>
+                <div class="ticket-title">${escapeHtml(t.title)}</div>
+                <div class="ticket-desc">${escapeHtml(t.description)}</div>
               </div>
-              <div class="ticket-title">${escapeHtml(t.title)}</div>
-              <div class="ticket-desc">${escapeHtml(t.description)}</div>
+              <div class="ticket-meta">
+                <span>${escapeHtml(t.category || '')} · ${escapeHtml(t.priority || '')}</span>
+                <span>${formatDate(t.createdAt)}</span>
+              </div>
             </div>
-            <div class="ticket-meta">
-              <span>${escapeHtml(t.category || '')} · ${escapeHtml(t.priority || '')}</span>
-              <span>${formatDate(t.createdAt)}</span>
+            <div class="ticket-detail">
+              <div class="ticket-detail-inner">
+                <div class="detail-col">
+                  <h4>Comments</h4>
+                  <div class="detail-body">Click to load…</div>
+                </div>
+                <div class="detail-col">
+                  <h4>History</h4>
+                  <div class="detail-body">Click to load…</div>
+                </div>
+              </div>
             </div>
           </div>
         `).join('')
       }</div>`;
+
+      document.querySelectorAll('.ticket-card').forEach(card => {
+        card.addEventListener('click', () => toggleTicketDetail(card));
+      });
+    }
+
+    async function toggleTicketDetail(card){
+      const isExpanded = card.classList.contains('expanded');
+
+      if(isExpanded){
+        card.classList.remove('expanded');
+        return;
+      }
+
+      card.classList.add('expanded');
+
+      const ticketId = card.getAttribute('data-ticket-id');
+      const cols = card.querySelectorAll('.detail-body');
+      const commentsEl = cols[0];
+      const historyEl = cols[1];
+
+      if(card.dataset.loaded === 'true') return;
+
+      commentsEl.innerHTML = '<div class="detail-loading">Loading comments…</div>';
+      historyEl.innerHTML = '<div class="detail-loading">Loading history…</div>';
+
+      try{
+        const [commentsRes, historyRes] = await Promise.all([
+          fetch(`${API_BASE}/tickets/${ticketId}/comments`, { headers: authHeaders() }),
+          fetch(`${API_BASE}/tickets/${ticketId}/history`, { headers: authHeaders() })
+        ]);
+
+        if(commentsRes.ok){
+          const comments = await commentsRes.json();
+          commentsEl.innerHTML = comments.length
+            ? comments.map(c => `
+                <div class="comment-item">
+                  <div class="comment-meta">${formatDate(c.commentedAt)}</div>
+                  <div>${escapeHtml(c.message)}</div>
+                </div>
+              `).join('')
+            : '<div class="detail-empty">No comments yet.</div>';
+        } else {
+          commentsEl.innerHTML = '<div class="detail-empty">Could not load comments.</div>';
+        }
+
+        if(historyRes.ok){
+          const history = await historyRes.json();
+          historyEl.innerHTML = history.length
+            ? history.map(h => `
+                <div class="history-item">
+                  <div>${escapeHtml(h.oldStatus)} → ${escapeHtml(h.newStatus)}</div>
+                  <div class="history-meta">${escapeHtml(h.updatedBy || '')} · ${formatDate(h.updatedAt)}</div>
+                </div>
+              `).join('')
+            : '<div class="detail-empty">No status changes yet.</div>';
+        } else {
+          historyEl.innerHTML = '<div class="detail-empty">Could not load history.</div>';
+        }
+
+        card.dataset.loaded = 'true';
+
+      } catch(err){
+        commentsEl.innerHTML = '<div class="detail-empty">Could not reach the server.</div>';
+        historyEl.innerHTML = '<div class="detail-empty">Could not reach the server.</div>';
+      }
     }
 
     async function loadTickets(){
