@@ -339,7 +339,26 @@
           border:1px solid #BFDBD3;
           color:var(--teal);
         }
+.tabs{
+    display:flex;
+    gap:10px;
+    margin-bottom:18px;
+}
 
+.tab{
+    flex:1;
+    padding:10px;
+    border:none;
+    cursor:pointer;
+    border-radius:7px;
+    background:#ececec;
+    font-weight:600;
+}
+
+.tab.active{
+    background:#0F2A4A;
+    color:white;
+}
         @media (max-width: 860px){
           body{ flex-direction:column; }
           .brand-panel{ min-width:0; padding:36px 28px; }
@@ -389,34 +408,61 @@
 
         <div class="ticket-top">
             <div class="kicker">Boarding Pass · Staff Access</div>
-            <h2>Sign in to your account</h2>
-            <p class="sub">Use the email and password issued to you.</p>
+
+            <div class="tabs">
+                <button id="loginTab" class="tab active" type="button">Sign In</button>
+                <button id="signupTab" class="tab" type="button">Sign Up</button>
+            </div>
+
+            <h2 id="formTitle">Sign in to your account</h2>
+            <p class="sub" id="formSubtitle">
+                Use your email and password.
+            </p>
         </div>
 
         <div id="statusMsg" class="status-msg" role="alert"></div>
 
-        <form id="loginForm" novalidate>
-            <div class="field">
-                <label for="email">Email address</label>
-                <input type="email" id="email" name="email" placeholder="you@bank.com" autocomplete="username" required>
+        <form id="loginForm">
+
+            <div id="nameFields" style="display:none;">
+
+                <div class="field">
+                    <label>First Name</label>
+                    <input id="firstName">
+                </div>
+
+                <div class="field">
+                    <label>Last Name</label>
+                    <input id="lastName">
+                </div>
+
+                <div class="field">
+                    <label>Role</label>
+
+                    <select id="role"
+                            style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;">
+                        <option value="REQUESTOR">Requestor</option>
+                        <option value="SUPPORT_ENGINEER">Support Engineer</option>
+                    </select>
+
+                </div>
+
             </div>
 
             <div class="field">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                <label>Email</label>
+                <input type="email" id="email">
             </div>
 
-            <div class="row-inline">
-                <label class="remember">
-                    <input type="checkbox" id="remember">
-                    Keep me signed in
-                </label>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" id="password">
             </div>
 
-            <button type="submit" class="submit-btn" id="submitBtn">
-                <span class="btn-text">Sign in</span>
-                <span class="spinner"></span>
+            <button class="submit-btn" id="submitBtn">
+                <span id="btnText">Sign In</span>
             </button>
+
         </form>
 
         <div class="perforation">
@@ -435,95 +481,146 @@
 </div>
 
 <script>
-    const API_URL = 'http://localhost:8080/api/users/login';
+    const loginAPI="http://localhost:8080/api/users/login";
+ const registerAPI="http://localhost:8080/api/users/register";
 
-    const form = document.getElementById('loginForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
+ let signup=false;
 
-    function showStatus(message, type){
-      statusMsg.textContent = message;
-      statusMsg.className = 'status-msg show ' + type;
-    }
+ const loginTab=document.getElementById("loginTab");
+ const signupTab=document.getElementById("signupTab");
 
-    function clearStatus(){
-      statusMsg.className = 'status-msg';
-      statusMsg.textContent = '';
-    }
+ loginTab.onclick=()=>switchMode(false);
+ signupTab.onclick=()=>switchMode(true);
 
-    function setLoading(isLoading){
-      submitBtn.disabled = isLoading;
-      submitBtn.classList.toggle('loading', isLoading);
-    }
+ function switchMode(isSignup){
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      clearStatus();
+ signup=isSignup;
 
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
+ document.getElementById("nameFields").style.display=
+ isSignup?"block":"none";
 
-      if(!email || !password){
-        showStatus('Enter both your email and password to continue.', 'error');
-        return;
-      }
+ document.getElementById("btnText").innerText=
+ isSignup?"Create Account":"Sign In";
 
-      setLoading(true);
+ document.getElementById("formTitle").innerText=
+ isSignup?"Create Account":"Sign in to your account";
 
-      try{
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
+ loginTab.classList.toggle("active",!isSignup);
+ signupTab.classList.toggle("active",isSignup);
 
-        let data = null;
-        try{ data = await response.json(); } catch(_){ /* non-JSON body */ }
+ }
 
-        if(response.ok){
-          const name = data && data.firstName ? data.firstName : 'there';
-          showStatus(`Welcome back, ${name}. Redirecting you now…`, 'success');
+ document.getElementById("loginForm").onsubmit=async(e)=>{
 
-          // Store the JWT and basic user info for use on later authenticated requests.
-          if(data && data.token){
-            localStorage.setItem('authToken', data.token);
-            localStorage.setItem('userEmail', data.email || '');
-            localStorage.setItem('userRole', data.role || '');
-            localStorage.setItem('userFirstName', data.firstName || '');
-            localStorage.setItem('userId', data.id || '');
-          }
+ e.preventDefault();
 
-          // Hand off to the appropriate dashboard based on role.
-          // Adjust these paths once the requestor/support-engineer views exist.
-          setTimeout(() => {
-            if(data && data.role === 'SUPPORT_ENGINEER'){
-              window.location.href = '/support-dashboard.html';
-            } else {
-              window.location.href = '/requestor-dashboard.html';
-            }
-          }, 700);
+ if(signup){
 
-        } else if(response.status === 401){
-          showStatus(data && data.message ? data.message : 'Incorrect email or password. Please try again.', 'error');
-        } else if(response.status === 404){
-          showStatus(data && data.message ? data.message : 'No account found with that email.', 'error');
-        } else {
-          showStatus('Something went wrong while signing in. Please try again shortly.', 'error');
-        }
+ const body={
 
-      } catch(err){
-        showStatus('Could not reach the server. Check that the backend is running on port 8080.', 'error');
-      } finally{
-        setLoading(false);
-      }
-    });
+ firstName:firstName.value,
 
-    document.getElementById('contactAdmin').addEventListener('click', (e) => {
-      e.preventDefault();
-      showStatus('Please reach out to your bank\'s IT support desk to reset access.', 'success');
-    });
+ lastName:lastName.value,
+
+ email:email.value,
+
+ password:password.value,
+
+ role:role.value
+
+ };
+
+ const res=await fetch(registerAPI,{
+
+ method:"POST",
+
+ headers:{
+ "Content-Type":"application/json"
+ },
+
+ body:JSON.stringify(body)
+
+ });
+
+ if (res.ok) {
+
+    alert("Registration Successful!");
+
+    switchMode(false);
+
+    return;
+}
+
+let errorMessage;
+
+const contentType = res.headers.get("content-type");
+
+if (contentType && contentType.includes("application/json")) {
+
+    const errorData = await res.json();
+    errorMessage = Object.values(errorData)[0];
+
+} else {
+
+    errorMessage = await res.text();
+
+}
+
+alert(errorMessage);
+return;
+}
+ const res=await fetch(loginAPI,{
+
+ method:"POST",
+
+ headers:{
+ "Content-Type":"application/json"
+ },
+
+ body:JSON.stringify({
+
+ email:email.value,
+
+ password:password.value
+
+ })
+
+ });
+
+ const data=await res.json();
+
+ if(res.ok){
+
+ localStorage.setItem("authToken",data.token);
+ localStorage.setItem("userRole",data.role);
+ localStorage.setItem("userEmail",data.email);
+ localStorage.setItem("userFirstName",data.firstName);
+ localStorage.setItem("userId",data.id);
+
+ if(data.role==="SUPPORT_ENGINEER")
+
+ window.location="support-dashboard.html";
+
+ else
+
+ window.location="requestor-dashboard.html";
+
+ }
+ else{
+
+ alert("Invalid Login");
+ }
+
+ }
+    document.getElementById("contactAdmin").addEventListener("click", function(e) {
+    e.preventDefault();
+
+    alert(
+        "Contact Administrator\n\n" +
+        "Email: admin@bank.com\n" +
+        "Phone: +91 9876543210"
+    );
+});
 </script>
 
 </body>
