@@ -1,10 +1,638 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Requestor Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Management Portal — My Tickets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{
+          --navy: #0F2A4A;
+          --navy-deep: #0A1F38;
+          --paper: #FAFAF8;
+          --slate: #3C4757;
+          --slate-soft: #7C8A9A;
+          --amber: #D68A2C;
+          --amber-soft: #F0D9B3;
+          --teal: #3E7C6E;
+          --error: #B84C3E;
+          --border: #E3E1DA;
+        }
+
+        *{ box-sizing:border-box; margin:0; padding:0; }
+        html,body{ min-height:100%; }
+        body{
+          font-family:'Inter', sans-serif;
+          color:var(--slate);
+          background:var(--paper);
+        }
+
+        /* ============ HEADER ============ */
+        header{
+          background:linear-gradient(160deg, var(--navy) 0%, var(--navy-deep) 100%);
+          color:#EDEFF2;
+          padding:22px 40px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          flex-wrap:wrap;
+          gap:14px;
+        }
+
+        .brand-mark{
+          display:flex;
+          align-items:center;
+          gap:12px;
+        }
+
+        .brand-mark svg{ width:26px; height:26px; flex-shrink:0; }
+
+        .brand-mark span{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:12px;
+          letter-spacing:.14em;
+          text-transform:uppercase;
+          color:var(--amber-soft);
+        }
+
+        .header-right{
+          display:flex;
+          align-items:center;
+          gap:18px;
+        }
+
+        .user-chip{
+          font-size:13.5px;
+          color:#C9D2DC;
+        }
+
+        .user-chip b{ color:#FFFFFF; font-weight:600; }
+
+        .logout-btn{
+          font-family:'Inter', sans-serif;
+          font-size:13px;
+          font-weight:600;
+          color:var(--navy-deep);
+          background:var(--amber-soft);
+          border:none;
+          padding:9px 16px;
+          border-radius:7px;
+          cursor:pointer;
+          transition:background .15s ease;
+        }
+        .logout-btn:hover{ background:#fff; }
+
+        /* ============ MAIN LAYOUT ============ */
+        main{
+          max-width:1080px;
+          margin:0 auto;
+          padding:44px 32px 80px;
+        }
+
+        .page-heading{
+          margin-bottom:34px;
+        }
+
+        .page-heading .kicker{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11.5px;
+          letter-spacing:.1em;
+          text-transform:uppercase;
+          color:var(--amber);
+          margin-bottom:8px;
+          display:block;
+        }
+
+        .page-heading h1{
+          font-family:'Fraunces', serif;
+          font-weight:500;
+          font-size:clamp(26px, 3vw, 34px);
+          color:var(--navy-deep);
+        }
+
+        /* ============ NEW TICKET PANEL ============ */
+        .panel{
+          background:#FFFFFF;
+          border:1px solid var(--border);
+          border-radius:14px;
+          margin-bottom:40px;
+          overflow:hidden;
+        }
+
+        .panel-header{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          padding:22px 26px;
+          cursor:pointer;
+          user-select:none;
+        }
+
+        .panel-header h2{
+          font-family:'Fraunces', serif;
+          font-weight:500;
+          font-size:19px;
+          color:var(--navy-deep);
+        }
+
+        .panel-header .toggle-icon{
+          width:20px; height:20px;
+          color:var(--slate-soft);
+          transition:transform .2s ease;
+          flex-shrink:0;
+        }
+        .panel.open .toggle-icon{ transform:rotate(45deg); }
+
+        .panel-body{
+          max-height:0;
+          overflow:hidden;
+          transition:max-height .25s ease;
+        }
+        .panel.open .panel-body{ max-height:900px; }
+
+        form.ticket-form{
+          padding:4px 26px 28px;
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:16px 18px;
+        }
+
+        .field{ display:flex; flex-direction:column; gap:7px; }
+        .field.span-2{ grid-column: span 2; }
+
+        .field label{
+          font-size:12.5px;
+          font-weight:600;
+          color:var(--slate);
+          letter-spacing:.01em;
+        }
+
+        .field input,
+        .field select,
+        .field textarea{
+          width:100%;
+          padding:11px 13px;
+          font-family:'Inter', sans-serif;
+          font-size:14px;
+          color:var(--navy-deep);
+          background:#FCFCFB;
+          border:1.5px solid var(--border);
+          border-radius:8px;
+          outline:none;
+          transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+        }
+
+        .field textarea{ resize:vertical; min-height:88px; font-family:'Inter', sans-serif; }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus{
+          border-color:var(--amber);
+          background:#FFFFFF;
+          box-shadow:0 0 0 3px rgba(214,138,44,0.14);
+        }
+
+        .form-actions{
+          grid-column:span 2;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          margin-top:6px;
+        }
+
+        .submit-btn{
+          padding:12px 22px;
+          background:var(--navy);
+          color:#FFFFFF;
+          border:none;
+          border-radius:8px;
+          font-family:'Inter', sans-serif;
+          font-size:14px;
+          font-weight:600;
+          cursor:pointer;
+          transition:background .15s ease;
+          display:flex;
+          align-items:center;
+          gap:8px;
+        }
+        .submit-btn:hover{ background:#173763; }
+        .submit-btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+        .form-status{
+          font-size:13px;
+          font-weight:500;
+        }
+        .form-status.error{ color:var(--error); }
+        .form-status.success{ color:var(--teal); }
+
+        /* ============ TICKET LIST ============ */
+        .list-heading{
+          display:flex;
+          align-items:baseline;
+          justify-content:space-between;
+          margin-bottom:16px;
+        }
+
+        .list-heading h2{
+          font-family:'Fraunces', serif;
+          font-weight:500;
+          font-size:20px;
+          color:var(--navy-deep);
+        }
+
+        .list-heading .count{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:12.5px;
+          color:var(--slate-soft);
+        }
+
+        .ticket-list{
+          display:flex;
+          flex-direction:column;
+          gap:12px;
+        }
+
+        .ticket-card{
+          background:#FFFFFF;
+          border:1px solid var(--border);
+          border-left:4px solid var(--slate-soft);
+          border-radius:10px;
+          padding:18px 20px;
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:20px;
+          flex-wrap:wrap;
+        }
+
+        .ticket-card.priority-HIGH{ border-left-color:var(--error); }
+        .ticket-card.priority-MEDIUM{ border-left-color:var(--amber); }
+        .ticket-card.priority-LOW{ border-left-color:var(--teal); }
+
+        .ticket-main{ flex:1; min-width:240px; }
+
+        .ticket-top-row{
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin-bottom:6px;
+          flex-wrap:wrap;
+        }
+
+        .ticket-id{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:11.5px;
+          color:var(--slate-soft);
+        }
+
+        .badge{
+          font-family:'IBM Plex Mono', monospace;
+          font-size:10.5px;
+          letter-spacing:.04em;
+          text-transform:uppercase;
+          padding:3px 9px;
+          border-radius:20px;
+          font-weight:500;
+        }
+
+        .badge.status-OPEN{ background:#FBEBE8; color:var(--error); }
+        .badge.status-IN_PROGRESS{ background:#F0D9B3; color:#8A5A16; }
+        .badge.status-RESOLVED{ background:#E9F3F0; color:var(--teal); }
+        .badge.status-CLOSED{ background:#EDEDEA; color:var(--slate-soft); }
+
+        .ticket-title{
+          font-size:15.5px;
+          font-weight:600;
+          color:var(--navy-deep);
+          margin-bottom:4px;
+        }
+
+        .ticket-desc{
+          font-size:13.5px;
+          color:var(--slate-soft);
+          line-height:1.5;
+          max-width:560px;
+        }
+
+        .ticket-meta{
+          display:flex;
+          flex-direction:column;
+          align-items:flex-end;
+          gap:6px;
+          font-size:12px;
+          color:var(--slate-soft);
+          font-family:'IBM Plex Mono', monospace;
+          white-space:nowrap;
+        }
+
+        .empty-state{
+          text-align:center;
+          padding:56px 20px;
+          border:1.5px dashed var(--border);
+          border-radius:12px;
+          color:var(--slate-soft);
+        }
+        .empty-state .big{
+          font-family:'Fraunces', serif;
+          font-size:19px;
+          color:var(--navy-deep);
+          margin-bottom:6px;
+        }
+
+        .loading-state{
+          text-align:center;
+          padding:40px 20px;
+          color:var(--slate-soft);
+          font-size:13.5px;
+        }
+
+        @media (max-width: 640px){
+          form.ticket-form{ grid-template-columns:1fr; }
+          .field.span-2{ grid-column: span 1; }
+          .form-actions{ grid-column: span 1; flex-direction:column-reverse; align-items:stretch; gap:10px; }
+        }
+    </style>
 </head>
 <body>
-<h1>Welcome Requestor!</h1>
-<p>Login successful.</p>
+
+<header>
+    <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="5" width="20" height="14" rx="2" stroke="#D68A2C" stroke-width="1.6"/>
+            <path d="M2 10H22" stroke="#D68A2C" stroke-width="1.6"/>
+            <circle cx="17" cy="14.5" r="1.4" fill="#D68A2C"/>
+        </svg>
+        <span>Ticket Management Portal</span>
+    </div>
+    <div class="header-right">
+        <span class="user-chip">Signed in as <b id="userNameLabel">—</b></span>
+        <button class="logout-btn" id="logoutBtn">Sign out</button>
+    </div>
+</header>
+
+<main>
+    <div class="page-heading">
+        <span class="kicker">Requestor View</span>
+        <h1>Your support tickets</h1>
+    </div>
+
+    <div class="panel" id="newTicketPanel">
+        <div class="panel-header" id="panelToggle">
+            <h2>Raise a new ticket</h2>
+            <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <div class="panel-body">
+            <form class="ticket-form" id="ticketForm" novalidate>
+                <div class="field span-2">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" name="title" placeholder="Brief summary of the issue" required>
+                </div>
+
+                <div class="field span-2">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" placeholder="Describe what's happening in detail" required></textarea>
+                </div>
+
+                <div class="field">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="LOGIN">Login</option>
+                        <option value="PAYMENT">Payment</option>
+                        <option value="ACCOUNT">Account</option>
+                        <option value="CARD">Card</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority" required>
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM" selected>Medium</option>
+                        <option value="HIGH">High</option>
+                    </select>
+                </div>
+
+                <div class="field span-2">
+                    <label for="clientId">Client</label>
+                    <select id="clientId" name="clientId" required>
+                        <option value="1">SBI</option>
+                        <option value="2">HDFC Bank</option>
+                        <option value="3">ICICI Bank</option>
+                        <option value="4">Axis Bank</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <span class="form-status" id="formStatus"></span>
+                    <button type="submit" class="submit-btn" id="submitBtn">Submit ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="list-heading">
+        <h2>Ticket history</h2>
+        <span class="count" id="ticketCount"></span>
+    </div>
+
+    <div id="ticketListContainer">
+        <div class="loading-state">Loading your tickets…</div>
+    </div>
+</main>
+
+<script>
+    const API_BASE = 'http://localhost:8080/api';
+
+    const token = localStorage.getItem('authToken');
+    const userId = localStorage.getItem('userId');
+    const userFirstName = localStorage.getItem('userFirstName');
+
+    // Guard: no token means not logged in.
+    if(!token || !userId){
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('userNameLabel').textContent = userFirstName || 'there';
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userFirstName');
+      localStorage.removeItem('userId');
+      window.location.href = '/login.html';
+    });
+
+    function authHeaders(extra){
+      return Object.assign({ 'Authorization': `Bearer ${token}` }, extra || {});
+    }
+
+    // ---------- Collapsible new-ticket panel ----------
+    const panel = document.getElementById('newTicketPanel');
+    document.getElementById('panelToggle').addEventListener('click', () => {
+      panel.classList.toggle('open');
+    });
+
+    // ---------- Ticket list ----------
+    const listContainer = document.getElementById('ticketListContainer');
+    const ticketCountEl = document.getElementById('ticketCount');
+
+    function escapeHtml(str){
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+
+    function formatDate(iso){
+      if(!iso) return '';
+      const d = new Date(iso);
+      if(isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    }
+
+    function renderTickets(tickets){
+      if(!tickets || tickets.length === 0){
+        ticketCountEl.textContent = '';
+        listContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="big">No tickets yet</div>
+            <div>Raise your first ticket using the form above.</div>
+          </div>`;
+        return;
+      }
+
+      ticketCountEl.textContent = `${tickets.length} total`;
+
+      const sorted = [...tickets].sort((a, b) => {
+        const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return db - da;
+      });
+
+      listContainer.innerHTML = `<div class="ticket-list">${
+        sorted.map(t => `
+          <div class="ticket-card priority-${escapeHtml(t.priority || '')}">
+            <div class="ticket-main">
+              <div class="ticket-top-row">
+                <span class="ticket-id">#TMP-${escapeHtml(t.id)}</span>
+                <span class="badge status-${escapeHtml(t.status || 'OPEN')}">${escapeHtml((t.status || 'OPEN').replace('_',' '))}</span>
+              </div>
+              <div class="ticket-title">${escapeHtml(t.title)}</div>
+              <div class="ticket-desc">${escapeHtml(t.description)}</div>
+            </div>
+            <div class="ticket-meta">
+              <span>${escapeHtml(t.category || '')} · ${escapeHtml(t.priority || '')}</span>
+              <span>${formatDate(t.createdAt)}</span>
+            </div>
+          </div>
+        `).join('')
+      }</div>`;
+    }
+
+    async function loadTickets(){
+      listContainer.innerHTML = '<div class="loading-state">Loading your tickets…</div>';
+      try{
+        const response = await fetch(`${API_BASE}/tickets/user/${userId}`, {
+          headers: authHeaders()
+        });
+
+        if(response.status === 401 || response.status === 403){
+          localStorage.removeItem('authToken');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        if(!response.ok){
+          listContainer.innerHTML = `<div class="empty-state"><div class="big">Couldn't load tickets</div><div>Please refresh the page to try again.</div></div>`;
+          return;
+        }
+
+        const tickets = await response.json();
+        renderTickets(tickets);
+
+      } catch(err){
+        listContainer.innerHTML = `<div class="empty-state"><div class="big">Couldn't reach the server</div><div>Check that the backend is running on port 8080.</div></div>`;
+      }
+    }
+
+    // ---------- New ticket form ----------
+    const ticketForm = document.getElementById('ticketForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const formStatus = document.getElementById('formStatus');
+
+    ticketForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const category = document.getElementById('category').value;
+      const priority = document.getElementById('priority').value;
+      const clientId = parseInt(document.getElementById('clientId').value, 10);
+
+      if(!title || !description){
+        formStatus.textContent = 'Please fill in both title and description.';
+        formStatus.className = 'form-status error';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      formStatus.textContent = 'Submitting…';
+      formStatus.className = 'form-status';
+
+      try{
+        const response = await fetch(`${API_BASE}/tickets`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            title,
+            description,
+            category,
+            priority,
+            clientId,
+            createdBy: parseInt(userId, 10)
+          })
+        });
+
+        if(response.status === 401 || response.status === 403){
+          localStorage.removeItem('authToken');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        if(!response.ok){
+          const data = await response.json().catch(() => null);
+          formStatus.textContent = (data && data.message) ? data.message : 'Could not create the ticket. Please try again.';
+          formStatus.className = 'form-status error';
+          return;
+        }
+
+        formStatus.textContent = 'Ticket submitted successfully.';
+        formStatus.className = 'form-status success';
+        ticketForm.reset();
+        document.getElementById('priority').value = 'MEDIUM';
+
+        await loadTickets();
+
+        setTimeout(() => {
+          formStatus.textContent = '';
+          formStatus.className = 'form-status';
+        }, 3000);
+
+      } catch(err){
+        formStatus.textContent = 'Could not reach the server. Check that the backend is running.';
+        formStatus.className = 'form-status error';
+      } finally{
+        submitBtn.disabled = false;
+      }
+    });
+
+    // ---------- Init ----------
+    loadTickets();
+</script>
+
 </body>
 </html>

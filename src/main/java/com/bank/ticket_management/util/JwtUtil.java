@@ -60,6 +60,7 @@ public class JwtUtil {
             Claims claims = extractAllClaims(token);
             return claims.getExpiration().after(new Date());
         } catch (Exception e) {
+            System.out.println("JWT validation failed: " + e.getMessage());
             return false;
         }
     }
