@@ -1,5 +1,0 @@
-[33m3b17970[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m Merge branch 'master' into main
-[33m942ce4a[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mmaster[m[33m)[m Add JWT authentication and requestor dashboard
-[33mc8711c4[m Add login page frontend and BCrypt password hashing
-[33mc8d4de1[m[33m ([m[1;31morigin/main[m[33m)[m Added Bean Validation and Spring Security configuration
-[33m1dd80bf[m Merge branch 'main' of https://github.com/aditirishiraj/TicketManagementPortal
