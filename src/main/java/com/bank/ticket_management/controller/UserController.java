@@ -1,8 +1,7 @@
 package com.bank.ticket_management.controller;
 
-import com.bank.ticket_management.dto.LoginRequest;
-import com.bank.ticket_management.dto.LoginResponse;
-import com.bank.ticket_management.dto.UserDTO;
+import com.bank.ticket_management.dto.*;
+import com.bank.ticket_management.dto.ForgotPasswordResponse;
 import com.bank.ticket_management.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -36,6 +36,24 @@ public class UserController {
         return ResponseEntity.ok(
                 userService.login(loginRequest)
         );
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<TicketResponse.ForgotPasswordResponse> forgotPassword(
+            @Valid @RequestBody UserDTO.ForgotPasswordRequest request) {
+
+        return ResponseEntity.ok(
+                userService.forgotPassword(request)
+        );
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        userService.resetPassword(request);
+
+        return ResponseEntity.ok(Map.of("message", "Password has been reset successfully."));
     }
 
     @GetMapping("/{id}")

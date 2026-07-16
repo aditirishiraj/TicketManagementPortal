@@ -36,4 +36,18 @@ public class TicketResponse {
 
     private String assignedTo;
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ForgotPasswordResponse {
+
+        private String message;
+
+        // Returned directly since the project has no email server configured.
+        // Swap this out for an actual email send once SMTP is set up, and
+        // stop returning the token in the response body.
+        private String resetToken;
+    }
 }

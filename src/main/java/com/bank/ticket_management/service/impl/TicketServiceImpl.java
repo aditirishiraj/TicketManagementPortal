@@ -5,8 +5,11 @@ import com.bank.ticket_management.dto.TicketHistoryDTO;
 import com.bank.ticket_management.dto.TicketRequest;
 import com.bank.ticket_management.dto.TicketResponse;
 import com.bank.ticket_management.entity.Client;
+import com.bank.ticket_management.entity.Comment;
 import com.bank.ticket_management.entity.Ticket;
+import com.bank.ticket_management.entity.TicketHistory;
 import com.bank.ticket_management.entity.User;
+import com.bank.ticket_management.enums.Role;
 import com.bank.ticket_management.enums.Status;
 import com.bank.ticket_management.exception.ClientNotFoundException;
 import com.bank.ticket_management.exception.TicketNotFoundException;
@@ -16,11 +19,11 @@ import com.bank.ticket_management.repository.CommentRepository;
 import com.bank.ticket_management.repository.TicketHistoryRepository;
 import com.bank.ticket_management.repository.TicketRepository;
 import com.bank.ticket_management.repository.UserRepository;
+import com.bank.ticket_management.service.FileStorageService;
 import com.bank.ticket_management.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.bank.ticket_management.entity.TicketHistory;
-import com.bank.ticket_management.entity.Comment;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +33,9 @@ public class TicketServiceImpl implements TicketService {
 
     @Autowired
     private TicketRepository ticketRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @Autowired
     private UserRepository userRepository;
@@ -44,7 +50,9 @@ public class TicketServiceImpl implements TicketService {
     private TicketHistoryRepository ticketHistoryRepository;
 
     @Override
-    public TicketResponse createTicket(TicketRequest request) {
+    public TicketResponse createTicket(
+            TicketRequest request,
+            MultipartFile file) {
 
         User user = userRepository.findById(request.getCreatedBy())
                 .orElseThrow(() ->
@@ -54,12 +62,19 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() ->
                         new ClientNotFoundException("Client not found"));
 
+        String attachmentPath = null;
+
+        if (file != null && !file.isEmpty()) {
+            attachmentPath = fileStorageService.uploadFile(file);
+        }
+
         Ticket ticket = Ticket.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .category(request.getCategory())
                 .priority(request.getPriority())
                 .status(Status.OPEN)
+                .attachmentPath(attachmentPath)
                 .client(client)
                 .createdBy(user)
                 .assignedTo(null)
@@ -77,7 +92,6 @@ public class TicketServiceImpl implements TicketService {
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
-
     }
 
     @Override
@@ -91,7 +105,6 @@ public class TicketServiceImpl implements TicketService {
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
-
     }
 
     @Override
@@ -102,7 +115,6 @@ public class TicketServiceImpl implements TicketService {
                         new TicketNotFoundException("Ticket not found"));
 
         return convertToResponse(ticket);
-
     }
 
     private TicketResponse convertToResponse(Ticket ticket) {
@@ -130,7 +142,6 @@ public class TicketServiceImpl implements TicketService {
                                   + ticket.getAssignedTo().getLastName()
                 )
                 .build();
-
     }
 
     @Override
@@ -143,6 +154,10 @@ public class TicketServiceImpl implements TicketService {
         User engineer = userRepository.findById(engineerId)
                 .orElseThrow(() ->
                         new UserNotFoundException("Support Engineer not found"));
+
+        if (engineer.getRole() != Role.SUPPORT_ENGINEER) {
+            throw new IllegalArgumentException("User is not a Support Engineer");
+        }
 
         ticket.setAssignedTo(engineer);
 
@@ -236,13 +251,14 @@ public class TicketServiceImpl implements TicketService {
                         .oldStatus(history.getOldStatus())
                         .newStatus(history.getNewStatus())
                         .updatedBy(
-                                history.getUpdatedBy().getFirstName()
-                                        + " "
-                                        + history.getUpdatedBy().getLastName()
+                                history.getUpdatedBy() == null
+                                        ? "System"
+                                        : history.getUpdatedBy().getFirstName()
+                                          + " "
+                                          + history.getUpdatedBy().getLastName()
                         )
                         .updatedAt(history.getUpdatedAt())
                         .build())
                 .toList();
     }
-
 }

@@ -36,4 +36,10 @@ public class User {
     @Column(nullable = false)
     @Builder.Default
     private Boolean active = true;
+
+    @Column(name = "reset_token", length = 100)
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private java.time.LocalDateTime resetTokenExpiry;
 }

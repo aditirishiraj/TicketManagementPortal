@@ -1,11 +1,11 @@
 package com.bank.ticket_management.service.impl;
 
-import com.bank.ticket_management.dto.LoginRequest;
-import com.bank.ticket_management.dto.LoginResponse;
-import com.bank.ticket_management.dto.UserDTO;
+import com.bank.ticket_management.dto.*;
+import com.bank.ticket_management.dto.ForgotPasswordResponse;
 import com.bank.ticket_management.entity.User;
 import com.bank.ticket_management.exception.EmailAlreadyExistsException;
 import com.bank.ticket_management.exception.InvalidCredentialsException;
+import com.bank.ticket_management.exception.InvalidResetTokenException;
 import com.bank.ticket_management.exception.UserNotFoundException;
 import com.bank.ticket_management.repository.UserRepository;
 import com.bank.ticket_management.service.UserService;
@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -109,5 +111,45 @@ public class UserServiceImpl implements UserService {
                         .role(user.getRole())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public TicketResponse.ForgotPasswordResponse forgotPassword(UserDTO.ForgotPasswordRequest request) {
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() ->
+                        new UserNotFoundException("No account found with that email"));
+
+        String token = UUID.randomUUID().toString();
+
+        user.setResetToken(token);
+        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(15));
+
+        userRepository.save(user);
+
+        return TicketResponse.ForgotPasswordResponse.builder()
+                .message("A reset token has been generated. It expires in 15 minutes.")
+                .resetToken(token)
+                .build();
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+
+        User user = userRepository.findByResetToken(request.getToken())
+                .orElseThrow(() ->
+                        new InvalidResetTokenException("Invalid or expired reset token"));
+
+        if (user.getResetTokenExpiry() == null
+                || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+
+            throw new InvalidResetTokenException("Invalid or expired reset token");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+
+        userRepository.save(user);
     }
 }

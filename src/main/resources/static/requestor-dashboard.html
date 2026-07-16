@@ -485,6 +485,16 @@
                     </select>
                 </div>
 
+                <div class="field span-2">
+                    <label for="attachment">Attachment (Optional)</label>
+                    <input
+                            type="file"
+                            id="attachment"
+                            name="attachment"
+                            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+                    >
+                </div>
+
                 <div class="form-actions">
                     <span class="form-status" id="formStatus"></span>
                     <button type="submit" class="submit-btn" id="submitBtn">Submit ticket</button>
@@ -592,6 +602,14 @@
             <div class="ticket-detail">
               <div class="ticket-detail-inner">
                 <div class="detail-col">
+                  <h4>Attachment</h4>
+                  <div class="detail-body">${
+                    t.attachmentPath
+                      ? `<button type="button" class="view-attachment-btn" data-filename="${escapeHtml(t.attachmentPath)}">View attachment</button>`
+                      : 'No attachment'
+                  }</div>
+                </div>
+                <div class="detail-col">
                   <h4>Comments</h4>
                   <div class="detail-body">Click to load…</div>
                 </div>
@@ -607,6 +625,38 @@
 
       document.querySelectorAll('.ticket-card').forEach(card => {
         card.addEventListener('click', () => toggleTicketDetail(card));
+      });
+
+      document.querySelectorAll('.view-attachment-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const fileName = btn.getAttribute('data-filename');
+          const originalText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Loading…';
+          try {
+            const res = await fetch(`${API_BASE}/files/${encodeURIComponent(fileName)}`, {
+              headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+              localStorage.clear();
+              window.location.href = "/login.html";
+              return;
+            }
+            if (!res.ok) {
+              alert('Could not load the attachment.');
+              return;
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+          } catch (err) {
+            alert('Could not reach the server.');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+          }
+        });
       });
     }
 
@@ -704,70 +754,103 @@
     const formStatus = document.getElementById('formStatus');
 
     ticketForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    e.preventDefault();
 
-      const title = document.getElementById('title').value.trim();
-      const description = document.getElementById('description').value.trim();
-      const category = document.getElementById('category').value;
-      const priority = document.getElementById('priority').value;
-      const clientId = parseInt(document.getElementById('clientId').value, 10);
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const category = document.getElementById('category').value;
+    const priority = document.getElementById('priority').value;
+    const clientId = parseInt(document.getElementById('clientId').value);
+    const attachment = document.getElementById('attachment').files[0];
 
-      if(!title || !description){
+    if (!title || !description) {
         formStatus.textContent = 'Please fill in both title and description.';
         formStatus.className = 'form-status error';
         return;
-      }
+    }
 
-      submitBtn.disabled = true;
-      formStatus.textContent = 'Submitting…';
-      formStatus.className = 'form-status';
+    submitBtn.disabled = true;
+    formStatus.textContent = 'Submitting...';
+    formStatus.className = 'form-status';
 
-      try{
+    try {
+
+        const ticket = {
+            title: title,
+            description: description,
+            category: category,
+            priority: priority,
+            clientId: clientId,
+            createdBy: parseInt(userId)
+        };
+
+        const formData = new FormData();
+
+        formData.append(
+            "ticket",
+            new Blob(
+                [JSON.stringify(ticket)],
+                { type: "application/json" }
+            )
+        );
+
+        if (attachment) {
+            formData.append("file", attachment);
+        }
+
         const response = await fetch(`${API_BASE}/tickets`, {
-          method: 'POST',
-          headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({
-            title,
-            description,
-            category,
-            priority,
-            clientId,
-            createdBy: parseInt(userId, 10)
-          })
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            body: formData
         });
 
-        if(response.status === 401 || response.status === 403){
-          localStorage.removeItem('authToken');
-          window.location.href = '/login.html';
-          return;
+        if (response.status === 401 || response.status === 403) {
+            localStorage.clear();
+            window.location.href = "/login.html";
+            return;
         }
 
-        if(!response.ok){
-          const data = await response.json().catch(() => null);
-          formStatus.textContent = (data && data.message) ? data.message : 'Could not create the ticket. Please try again.';
-          formStatus.className = 'form-status error';
-          return;
+        if (!response.ok) {
+
+            let message = "Unable to create ticket.";
+
+            try {
+                const error = await response.json();
+                if (error.message) {
+                    message = error.message;
+                }
+            } catch (e) {}
+
+            formStatus.textContent = message;
+            formStatus.className = "form-status error";
+            return;
         }
 
-        formStatus.textContent = 'Ticket submitted successfully.';
-        formStatus.className = 'form-status success';
+        formStatus.textContent = "Ticket submitted successfully.";
+        formStatus.className = "form-status success";
+
         ticketForm.reset();
-        document.getElementById('priority').value = 'MEDIUM';
+        document.getElementById("priority").value = "MEDIUM";
 
         await loadTickets();
 
         setTimeout(() => {
-          formStatus.textContent = '';
-          formStatus.className = 'form-status';
+            formStatus.textContent = "";
+            formStatus.className = "form-status";
         }, 3000);
 
-      } catch(err){
-        formStatus.textContent = 'Could not reach the server. Check that the backend is running.';
-        formStatus.className = 'form-status error';
-      } finally{
+    } catch (err) {
+
+        formStatus.textContent =
+            "Could not reach the server.";
+        formStatus.className = "form-status error";
+
+    } finally {
         submitBtn.disabled = false;
-      }
-    });
+    }
+});
 
     // ---------- Init ----------
     loadTickets();

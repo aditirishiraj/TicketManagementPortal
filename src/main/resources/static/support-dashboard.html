@@ -515,6 +515,39 @@
       listContainer.querySelectorAll('.ticket-detail').forEach(el => {
         el.addEventListener('click', (e) => e.stopPropagation());
       });
+
+      // Wire up attachment view buttons
+      listContainer.querySelectorAll('.view-attachment-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const fileName = btn.getAttribute('data-filename');
+          const originalText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Loading…';
+          try {
+            const res = await fetch(`${API_BASE}/files/${encodeURIComponent(fileName)}`, {
+              headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+              localStorage.clear();
+              window.location.href = "/login.html";
+              return;
+            }
+            if (!res.ok) {
+              alert('Could not load the attachment.');
+              return;
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+          } catch (err) {
+            alert('Could not reach the server.');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+          }
+        });
+      });
     }
 
     function ticketCardHtml(t){
@@ -554,6 +587,14 @@
 
               <div class="detail-section">
                 <h4>Actions</h4>
+
+                <div class="control-row">
+                  ${
+                    t.attachmentPath
+                      ? `<button class="small-btn view-attachment-btn" data-filename="${escapeHtml(t.attachmentPath)}">View attachment</button>`
+                      : `<span class="muted-note">No attachment</span>`
+                  }
+                </div>
 
                 <div class="control-row">
                   <select class="assign-select" data-id="${t.id}">

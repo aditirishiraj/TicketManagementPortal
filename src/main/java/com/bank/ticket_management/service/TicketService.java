@@ -4,12 +4,13 @@ import com.bank.ticket_management.dto.CommentDTO;
 import com.bank.ticket_management.dto.TicketHistoryDTO;
 import com.bank.ticket_management.dto.TicketRequest;
 import com.bank.ticket_management.dto.TicketResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface TicketService {
 
-    TicketResponse createTicket(TicketRequest ticketRequest);
+    TicketResponse createTicket(TicketRequest request, MultipartFile file);
 
     List<TicketResponse> getAllTickets();
 

@@ -8,8 +8,10 @@ import com.bank.ticket_management.service.TicketService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,12 +22,17 @@ public class TicketController {
     @Autowired
     private TicketService ticketService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TicketResponse> createTicket(
-            @Valid @RequestBody TicketRequest request) {
+
+            @RequestPart("ticket")
+            @Valid TicketRequest request,
+
+            @RequestPart(value = "file", required = false)
+            MultipartFile file) {
 
         return new ResponseEntity<>(
-                ticketService.createTicket(request),
+                ticketService.createTicket(request, file),
                 HttpStatus.CREATED
         );
     }

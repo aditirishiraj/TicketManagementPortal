@@ -459,9 +459,52 @@
                 <input type="password" id="password">
             </div>
 
+            <div class="field" id="forgotLinkWrap" style="text-align:right; margin-top:-8px;">
+                <a href="#" id="forgotPasswordLink" style="font-size:13px; color:var(--navy); border-bottom:1px solid var(--amber); text-decoration:none;">Forgot password?</a>
+            </div>
+
             <button class="submit-btn" id="submitBtn">
                 <span id="btnText">Sign In</span>
             </button>
+
+        </form>
+
+        <form id="forgotForm" style="display:none;">
+
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="forgotEmail">
+            </div>
+
+            <button type="submit" class="submit-btn" id="forgotSubmitBtn">
+                <span>Send Reset Token</span>
+            </button>
+
+            <div class="field" style="text-align:center; margin-top:10px;">
+                <a href="#" id="backToLoginFromForgot" style="font-size:13px; color:var(--navy); border-bottom:1px solid var(--amber); text-decoration:none;">Back to sign in</a>
+            </div>
+
+        </form>
+
+        <form id="resetForm" style="display:none;">
+
+            <div class="field">
+                <label>Reset Token</label>
+                <input type="text" id="resetToken">
+            </div>
+
+            <div class="field">
+                <label>New Password</label>
+                <input type="password" id="newPassword">
+            </div>
+
+            <button type="submit" class="submit-btn" id="resetSubmitBtn">
+                <span>Reset Password</span>
+            </button>
+
+            <div class="field" style="text-align:center; margin-top:10px;">
+                <a href="#" id="backToLoginFromReset" style="font-size:13px; color:var(--navy); border-bottom:1px solid var(--amber); text-decoration:none;">Back to sign in</a>
+            </div>
 
         </form>
 
@@ -492,12 +535,125 @@
  loginTab.onclick=()=>switchMode(false);
  signupTab.onclick=()=>switchMode(true);
 
+ const loginForm=document.getElementById("loginForm");
+ const forgotForm=document.getElementById("forgotForm");
+ const resetForm=document.getElementById("resetForm");
+ const statusMsg=document.getElementById("statusMsg");
+ const tabsEl=document.querySelector(".tabs");
+
+ function showStatus(message, type){
+   statusMsg.textContent=message;
+   statusMsg.className="status-msg show "+type;
+ }
+
+ function hideStatus(){
+   statusMsg.className="status-msg";
+ }
+
+ function showView(view){
+   loginForm.style.display = view==="login" ? "block" : "none";
+   forgotForm.style.display = view==="forgot" ? "block" : "none";
+   resetForm.style.display = view==="reset" ? "block" : "none";
+   tabsEl.style.display = view==="login" ? "flex" : "none";
+   hideStatus();
+ }
+
+ document.getElementById("forgotPasswordLink").addEventListener("click",(e)=>{
+   e.preventDefault();
+   showView("forgot");
+ });
+
+ document.getElementById("backToLoginFromForgot").addEventListener("click",(e)=>{
+   e.preventDefault();
+   showView("login");
+ });
+
+ document.getElementById("backToLoginFromReset").addEventListener("click",(e)=>{
+   e.preventDefault();
+   showView("login");
+ });
+
+ document.getElementById("forgotForm").addEventListener("submit", async (e)=>{
+   e.preventDefault();
+
+   const emailVal=document.getElementById("forgotEmail").value.trim();
+
+   if(!emailVal){
+     showStatus("Please enter your email.","error");
+     return;
+   }
+
+   try{
+     const res=await fetch("http://localhost:8080/api/users/forgot-password",{
+       method:"POST",
+       headers:{ "Content-Type":"application/json" },
+       body:JSON.stringify({ email: emailVal })
+     });
+
+     const contentType=res.headers.get("content-type");
+     const data = contentType && contentType.includes("application/json")
+       ? await res.json()
+       : { message: await res.text() };
+
+     if(!res.ok){
+       showStatus(data.message || Object.values(data)[0] || "Could not process that email.","error");
+       return;
+     }
+
+     document.getElementById("resetToken").value = data.resetToken || "";
+     showView("reset");
+     showStatus(data.message || "Reset token generated.","success");
+
+   }catch(err){
+     showStatus("Could not reach the server.","error");
+   }
+ });
+
+ document.getElementById("resetForm").addEventListener("submit", async (e)=>{
+   e.preventDefault();
+
+   const token=document.getElementById("resetToken").value.trim();
+   const newPassword=document.getElementById("newPassword").value;
+
+   if(!token || !newPassword){
+     showStatus("Please fill in both fields.","error");
+     return;
+   }
+
+   try{
+     const res=await fetch("http://localhost:8080/api/users/reset-password",{
+       method:"POST",
+       headers:{ "Content-Type":"application/json" },
+       body:JSON.stringify({ token: token, newPassword: newPassword })
+     });
+
+     const contentType=res.headers.get("content-type");
+     const data = contentType && contentType.includes("application/json")
+       ? await res.json()
+       : { message: await res.text() };
+
+     if(!res.ok){
+       showStatus(data.message || Object.values(data)[0] || "Could not reset password.","error");
+       return;
+     }
+
+     showView("login");
+     showStatus("Password reset successfully. Please sign in.","success");
+
+   }catch(err){
+     showStatus("Could not reach the server.","error");
+   }
+ });
+
  function switchMode(isSignup){
 
  signup=isSignup;
 
  document.getElementById("nameFields").style.display=
  isSignup?"block":"none";
+
+ document.getElementById("forgotLinkWrap").style.display=
+ isSignup?"none":"block";
 
  document.getElementById("btnText").innerText=
  isSignup?"Create Account":"Sign In";
@@ -587,9 +743,9 @@ return;
 
  });
 
- const data=await res.json();
-
  if(res.ok){
+
+ const data=await res.json();
 
  localStorage.setItem("authToken",data.token);
  localStorage.setItem("userRole",data.role);
@@ -608,7 +764,21 @@ return;
  }
  else{
 
- alert("Invalid Login");
+ let message = "Invalid email or password.";
+
+ const contentType = res.headers.get("content-type");
+
+ try{
+   if (contentType && contentType.includes("application/json")) {
+     const errorData = await res.json();
+     message = Object.values(errorData)[0] || message;
+   } else {
+     const text = await res.text();
+     if (text) message = text;
+   }
+ }catch(e){}
+
+ showStatus(message, "error");
  }
 
  }
